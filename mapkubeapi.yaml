@@ -1,3 +1,30 @@
+.helm-mapkubeapis-prod:
+  extends: .auto-deploy
+  stage: deploy
+  needs: []
+  environment:
+    action: start
+  before_script:
+    - kubectl cluster-info
+    - echo $PROD_KUBECONFIG | base64 -d > kubecfg
+    - KUBECONFIG=$PWD/kubecfg
+    - kubectl cluster-info
+    - export TILLER_NAMESPACE=$KUBE_NAMESPACE
+    - |
+      if [[ "$HELM_VERSION_FOR_MAPKUBEAPIS" == 'v2' ]]; then
+        export HELM_HOST="localhost:44134"
+        nohup tiller -listen "${HELM_HOST}" >tiller.log 2>&1 &
+      fi
+    - helm init --client-only
+    - helm plugin install https://github.com/hickeyma/helm-mapkubeapis
+  script:
+    - |
+      if [[ "$HELM_VERSION_FOR_MAPKUBEAPIS" == 'v2' ]]; then
+        helm mapkubeapis $CI_ENVIRONMENT_SLUG --release-storage configmaps --kubeconfig $PWD/kubecfg --tiller-out-cluster --namespace $TILLER_NAMESPACE --v2
+      else
+        helm mapkubeapis $CI_ENVIRONMENT_SLUG --namespace $TILLER_NAMESPACE
+      fi
+      
 .helm-mapkubeapis:
   extends: .auto-deploy
   stage: deploy
@@ -52,7 +79,7 @@ staging:helm-mapkubeapis:
 
 
 production:helm-mapkubeapis:
-  extends: [.helm-mapkubeapis]
+  extends: [.helm-mapkubeapis-prod]
   environment:
     name: production
   only:
