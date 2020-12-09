@@ -1,6 +1,7 @@
 .helm-mapkubeapis-prod:
   extends: .auto-deploy
   stage: deploy
+  allow_failure: true
   needs: []
   environment:
     action: start
