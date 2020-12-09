@@ -5,6 +5,7 @@
   environment:
     action: start
   before_script:
+    - echo $DEV_KUBECONFIG | base64 -d > kubeconfig
     - KUBECONFIG=$PWD/kubeconfig
     - export TILLER_NAMESPACE=$KUBE_NAMESPACE
     - |
