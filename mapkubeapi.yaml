@@ -5,6 +5,7 @@
   environment:
     action: start
   before_script:
+    - KUBECONFIG=$PWD/kubeconfig
     - export TILLER_NAMESPACE=$KUBE_NAMESPACE
     - |
       if [[ "$HELM_VERSION_FOR_MAPKUBEAPIS" == 'v2' ]]; then
