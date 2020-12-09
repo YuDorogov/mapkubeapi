@@ -1,0 +1,95 @@
+.helm-mapkubeapis-prod:
+  extends: .auto-deploy
+  stage: deploy
+  needs: []
+  environment:
+    action: start
+  before_script:
+    - kubectl cluster-info
+    - echo $PROD_KUBECONFIG | base64 -d > kubecfg
+    - KUBECONFIG=$PWD/kubecfg
+    - kubectl cluster-info
+    - export TILLER_NAMESPACE=$KUBE_NAMESPACE
+    - |
+      if [[ "$HELM_VERSION_FOR_MAPKUBEAPIS" == 'v2' ]]; then
+        export HELM_HOST="localhost:44134"
+        nohup tiller -listen "${HELM_HOST}" >tiller.log 2>&1 &
+      fi
+    - helm init --client-only
+    - helm plugin install https://github.com/hickeyma/helm-mapkubeapis
+  script:
+    - |
+      if [[ "$HELM_VERSION_FOR_MAPKUBEAPIS" == 'v2' ]]; then
+        helm mapkubeapis $CI_ENVIRONMENT_SLUG --release-storage configmaps --kubeconfig $PWD/kubecfg --tiller-out-cluster --namespace $TILLER_NAMESPACE --v2
+      else
+        helm mapkubeapis $CI_ENVIRONMENT_SLUG --namespace $TILLER_NAMESPACE
+      fi
+      
+.helm-mapkubeapis:
+  extends: .auto-deploy
+  stage: deploy
+  needs: []
+  environment:
+    action: start
+  before_script:
+    - kubectl cluster-info
+    - echo $DEV_KUBECONFIG | base64 -d > kubecfg
+    - KUBECONFIG=$PWD/kubecfg
+    - kubectl cluster-info
+    - export TILLER_NAMESPACE=$KUBE_NAMESPACE
+    - |
+      if [[ "$HELM_VERSION_FOR_MAPKUBEAPIS" == 'v2' ]]; then
+        export HELM_HOST="localhost:44134"
+        nohup tiller -listen "${HELM_HOST}" >tiller.log 2>&1 &
+      fi
+    - helm init --client-only
+    - helm plugin install https://github.com/hickeyma/helm-mapkubeapis
+  script:
+    - |
+      if [[ "$HELM_VERSION_FOR_MAPKUBEAPIS" == 'v2' ]]; then
+        helm mapkubeapis $CI_ENVIRONMENT_SLUG --release-storage configmaps --kubeconfig $PWD/kubecfg --tiller-out-cluster --namespace $TILLER_NAMESPACE --v2
+      else
+        helm mapkubeapis $CI_ENVIRONMENT_SLUG --namespace $TILLER_NAMESPACE
+      fi
+
+review:helm-mapkubeapis:
+  extends: [.helm-mapkubeapis]
+  environment:
+    name: review/$CI_COMMIT_REF_NAME
+  only:
+    refs:
+      - branches
+      - tags
+    kubernetes: active
+  except:
+    refs:
+      - master
+
+
+staging:helm-mapkubeapis:
+  extends: [.helm-mapkubeapis]
+  environment:
+    name: Staging
+  only:
+    refs:
+      - master
+    kubernetes: active
+    variables:
+      - $STAGING_ENABLED
+
+
+production:helm-mapkubeapis:
+  extends: [.helm-mapkubeapis-prod]
+  environment:
+    name: production
+  only:
+    refs:
+      - master
+    kubernetes: active
+    variables:
+      - $STAGING_ENABLED
+      - $CANARY_ENABLED
+  except:
+    variables:
+      - $INCREMENTAL_ROLLOUT_ENABLED
+      - $INCREMENTAL_ROLLOUT_MODE
