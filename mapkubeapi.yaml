@@ -3,7 +3,7 @@
   stage: deploy
   needs: []
   environment:
-    action: prepare
+    action: start
   before_script:
     - export TILLER_NAMESPACE=$KUBE_NAMESPACE
     - |
