@@ -8,6 +8,7 @@
     - kubectl cluster-info
     - echo $DEV_KUBECONFIG | base64 -d > kubecfg
     - KUBECONFIG=$PWD/kubecfg
+    - kubectl cluster-info
     - export TILLER_NAMESPACE=$KUBE_NAMESPACE
     - |
       if [[ "$HELM_VERSION_FOR_MAPKUBEAPIS" == 'v2' ]]; then
