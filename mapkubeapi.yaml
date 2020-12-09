@@ -68,18 +68,6 @@ review:helm-mapkubeapis:
       - master
 
 
-staging:helm-mapkubeapis:
-  extends: [.helm-mapkubeapis]
-  environment:
-    name: staging
-  only:
-    refs:
-      - master
-    kubernetes: active
-    variables:
-      - $STAGING_ENABLED
-
-
 production:helm-mapkubeapis:
   extends: [.helm-mapkubeapis-prod]
   environment:
