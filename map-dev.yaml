@@ -2,6 +2,7 @@
   extends: .auto-deploy
   stage: deploy
   needs: []
+  allow_failure: true
   environment:
     action: start
   before_script:
